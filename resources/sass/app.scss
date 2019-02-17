@@ -58,9 +58,11 @@ body {
 }
 
 .products-index-page {
+
   .pagination {
     margin-right: 5px;
   }
+
   .products-list {
     padding: 0 15px;
     .product-item {
@@ -117,5 +119,11 @@ body {
         }
       }
     }
+  }
+
+  .search-form {
+    padding: 0 5px 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
   }
 }
