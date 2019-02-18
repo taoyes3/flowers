@@ -53,6 +53,7 @@ class ProductsController extends Controller
 
     public function show(Product $product, Request $request)
     {
+        // dd($product->skus()->where('id', 3)->first()->product);
         // 判断商品是否已经上架，如果没有上架则抛出异常
         if (!$product->on_sale) {
             throw new InvalidRequestException('商品未上架');
@@ -86,5 +87,13 @@ class ProductsController extends Controller
         $user->favoriteProducts()->detach($product);
 
         return [];
+    }
+
+    public function favorites(Request $request)
+    {
+        $user = $request->user();
+        $products = $user->favoriteProducts()->paginate(16);
+
+        return view('products.favorites', ['products' => $products]);
     }
 }
