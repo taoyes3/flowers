@@ -11,9 +11,11 @@ class CartController extends Controller
 {
     public function index(Request $request)
     {
-        $cartItems = $request->user()->cartItems()->with('productSku.product')->get();
+        $user = $request->user();
+        $cartItems = $user->cartItems()->with('productSku.product')->get();
+        $addresses = $user->addresses()->orderBy('last_used_at', 'desc')->get();
 
-        return view('cart.index', ['cartItems' => $cartItems]);
+        return view('cart.index', ['cartItems' => $cartItems, 'addresses' => $addresses]);
     }
     
     public function add(AddCartRequest $request)
@@ -27,7 +29,6 @@ class CartController extends Controller
                 'amount' => $cart->amount + $amount,
             ]);
         } else {
-            // dd(123);
             $cart = new CartItem(['amount' => $amount]);
             $cart->user()->associate($user);
             $cart->productSku()->associate($skuId);
