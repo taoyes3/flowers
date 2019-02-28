@@ -14,6 +14,15 @@ use Illuminate\Http\Request;
 
 class OrdersController extends Controller
 {
+    public function index(Request $request)
+    {
+        $user = $request->user();
+
+        $orders = $user->orders()->with(['items.product', 'items.productSku'])->orderBy('created_at', 'desc')->paginate();
+        // dd($orders);
+        return view('orders.index', ['orders' => $orders]);
+    }
+
     public function store(OrderRequest $request)
     {
         $user = $request->user();
