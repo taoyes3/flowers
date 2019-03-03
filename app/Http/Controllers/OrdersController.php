@@ -17,9 +17,8 @@ class OrdersController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-
         $orders = $user->orders()->with(['items.product', 'items.productSku'])->orderBy('created_at', 'desc')->paginate();
-        // dd($orders);
+
         return view('orders.index', ['orders' => $orders]);
     }
 
@@ -82,5 +81,13 @@ class OrdersController extends Controller
         $this->dispatch(new CloseOrder($order, config('app.order_ttl')));
 
         return $order;
+    }
+
+    public function show(Order $order)
+    {
+        $this->authorize('own', $order);
+        $items = $order->items()->with(['product', 'productSku'])->get();
+        // dd($items);
+        return view('orders.show', ['order' => $order, 'items' => $items]);
     }
 }
