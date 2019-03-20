@@ -27,6 +27,14 @@ class OrdersController extends Controller
             ->body($this->grid());
     }
 
+    public function show(Order $order, Content $content)
+    {
+        return $content
+            ->header('查看订单')
+            // body 方法可以接受 Laravel 的视图作为参数
+            ->body(view('admin.orders.show', ['order' => $order->load(['items.product', 'items.productSku'])]));
+    }
+
     /**
      * Make a grid builder.
      *
@@ -65,7 +73,12 @@ class OrdersController extends Controller
             });
         });
 
-        $grid->disableActions();  // 禁用操作列
+        // $grid->disableActions();  // 禁用操作列
+
+        $grid->actions(function ($actions) {
+            $actions->disableDelete();  // 禁用删除按钮
+            $actions->disableEdit();  // 禁用编辑按钮
+        });
 
         return $grid;
     }
