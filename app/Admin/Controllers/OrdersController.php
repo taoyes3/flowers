@@ -2,6 +2,7 @@
 
 namespace App\Admin\Controllers;
 
+use App\Exceptions\InvalidRequestException;
 use App\Models\Order;
 use App\Http\Controllers\Controller;
 use Encore\Admin\Controllers\HasResourceActions;
@@ -9,6 +10,7 @@ use Encore\Admin\Form;
 use Encore\Admin\Grid;
 use Encore\Admin\Layout\Content;
 use Encore\Admin\Show;
+use Illuminate\Http\Request;
 
 class OrdersController extends Controller
 {
@@ -81,5 +83,40 @@ class OrdersController extends Controller
         });
 
         return $grid;
+    }
+
+    /**
+     * send out goods
+     * @param Order $order
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     * @throws InvalidRequestException
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function ship(Order $order, Request $request)
+    {
+        if (!$order->paid_at) {
+            throw new InvalidRequestException('该订单未付款');
+        }
+
+        if ($order->ship_status !== Order::SHIP_STATUS_PENDING) {
+            throw new InvalidRequestException('该订单已发货');
+        }
+
+        // Laravel 5.5 之后，validate 方法返回校验后的数据
+        $data = $this->validate($request, [
+            'express_company' => ['required'],
+            'express_no' => ['required'],
+        ], [], [
+            'express_company' => '物流公司',
+            'express_no' => '物流单号',
+        ]);
+
+        $order->update([
+            'ship_status' => Order::SHIP_STATUS_DELIVERED,
+            'ship_data' => $data, // 在 Order 模型 $cast 属性里已经指明 ship_data 是一个数组，因此这里可以直接把数组传过去
+        ]);
+
+        return redirect()->back(); // 返回上一页
     }
 }
