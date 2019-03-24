@@ -37,6 +37,21 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::get('payment/{order}/alipay', 'PaymentController@payByAlipay')->name('payment.alipay');
     Route::get('payment/alipay/return', 'PaymentController@alipayReturn')->name('payment.alipay.return');
     Route::post('orders/{order}/received', 'OrdersController@received')->name('orders.received');
+    Route::get('orders/{order}/review', 'OrdersController@review')->name('orders.review.show');
+    Route::post('orders/{order}/review', 'OrdersController@sendReview')->name('orders.review.store');
 });
 
 Route::post('payment/alipay/notify', 'PaymentController@alipayNotify')->name('payment.alipay.notify');
+
+Route::get('test', function() {
+    \App\Models\OrderItem::query()
+        ->where('product_id', 3)
+        ->whereHas('order', function ($query) {
+            $query->where('reviewed', 1);
+        })
+        ->first([
+            DB::raw('count(*) as review_count'),
+            DB::raw('avg(rating) as rating')
+        ]);
+    echo 123;
+});
