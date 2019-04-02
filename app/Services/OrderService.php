@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Exceptions\CouponCodeUnavailableException;
 use App\Jobs\CloseOrder;
+use App\Models\CouponCode;
 use App\Models\Order;
 use App\Models\ProductSku;
 use App\Models\User;
@@ -12,10 +14,16 @@ use App\Exceptions\InvalidRequestException;
 
 class OrderService
 {
-    public function store(User $user, UserAddress $address, $remark, $items)
+    public function store(User $user, UserAddress $address, $remark, $items, CouponCode $coupon = null)
     {
+        // 如果传入了优惠券，则先检查是否可用
+        if ($coupon) {
+            // 但此时我们还没有计算出订单总金额，因此先不校验
+            $coupon->checkAvailable();
+        }
+
         // 开启数据库事物
-        $order = \DB::transaction(function () use ($user, $address, $remark, $items) {
+        $order = \DB::transaction(function () use ($user, $address, $remark, $items, $coupon) {
             // 更新用户地址最后使用时间
             $address->update(['last_used_at' => Carbon::now()]);
 
@@ -52,6 +60,16 @@ class OrderService
 
                 if ($productSku->decreaseStock($item['amount']) <= 0) {
                     throw new InvalidRequestException('该商品库存不足');
+                }
+            }
+
+            if ($coupon) {
+                $coupon->checkAvailable($totalAmount);
+                $totalAmount = $coupon->getAdjustedPrice($totalAmount);
+                $order->couponCode()->associate($coupon); // 将订单与优惠券关联
+
+                if ($coupon->changeUsed() <= 0) {
+                    throw new CouponCodeUnavailableException('该优惠券已被兑完');
                 }
             }
 
