@@ -41,19 +41,22 @@ class OrdersSeeder extends Seeder
         $products->unique('id')->each(function (Product $product) {
             // 查出该商品的评价数、评分、销量
             $result = OrderItem::query()->where('product_id', $product->id)
-                ->whereHas('order', function ($query) {
-                    $query->whereNotNull('paid_at');
-                })
+                ->whereNotNull('reviewed_at')
                 ->first([
                     DB::raw('count(*) as review_count'),
                     DB::raw('avg(rating) as rating'),
-                    DB::raw('sum(amount) as sold_count'),
                 ]);
+
+            $soldCount = OrderItem::query()
+                ->where('product_id', $product->id)
+                ->whereHas('order', function ($query) {
+                    $query->whereNotNull('paid_at');
+                })->sum('amount');
 
             $product->update([
                 'rating' => $result->rating ?: 5, // 如果某个商品没有评分，则默认为 5 分
                 'review_count' => $result->review_count,
-                'sold_count' => $result->sold_count,
+                'sold_count' => $soldCount,
             ]);
         });
     }
