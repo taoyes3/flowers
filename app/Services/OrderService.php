@@ -19,7 +19,7 @@ class OrderService
         // 如果传入了优惠券，则先检查是否可用
         if ($coupon) {
             // 但此时我们还没有计算出订单总金额，因此先不校验
-            $coupon->checkAvailable();
+            $coupon->checkAvailable($user);
         }
 
         // 开启数据库事物
@@ -64,7 +64,7 @@ class OrderService
             }
 
             if ($coupon) {
-                $coupon->checkAvailable($totalAmount);
+                $coupon->checkAvailable($user, $totalAmount);
                 $totalAmount = $coupon->getAdjustedPrice($totalAmount);
                 $order->couponCode()->associate($coupon); // 将订单与优惠券关联
 
